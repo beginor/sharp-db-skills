@@ -1,30 +1,110 @@
-# 数据库 MCP 工具
+# Sharp-DB
 
-一个支持多种数据库的 MCP 服务器，具有如下工具：
+A CLI tool and Claude Code Skill for querying databases (PostgreSQL, MySQL, SQLite) and inspecting schema metadata.
 
-- `ExecuteQuery(dbType, connectionString, sql)` 执行 SQL 语句， 以 markdown 表格的形式返回结果；
-- `QueryTables(dbType, connectionString, schema)` 返回数据库中的表和视图及其描述、主键、外键和关联对象信息；`schema` 为可选参数，如果数据库支持 schema 且未传入 `schema`，则返回全部 schema 下的表/视图；
-- `QueryColumns(dbType, connectionString, tableName, schema)` 返回数据库表/视图中的数据列及其描述、主键、外键和关联列信息；`schema` 为可选参数，如果数据库支持 schema 且未传入 `schema`，则返回全部 schema 下匹配 `tableName` 的表/视图列；
+## Features
 
-## 命令行 stdio 模式
+- **Execute SQL queries** and get results as markdown tables
+- **List tables and views** with primary keys, foreign keys, and descriptions
+- **Inspect table columns** with data types, constraints, and foreign key references
+- **Multi-database support**: PostgreSQL, MySQL, SQLite
+- **Schema-aware**: Optional schema filtering for databases that support schemas
 
-在命令行 stdio 模式下启动一个 MCP 实例即可。数据库连接信息由每次工具调用传入：
+## Installation
 
-- `dbType` 为数据库类型，全部小写，支持 postgres、 mysql、 sqlite；
-- `connectionString` 为标准的 ADO.NET 数据库连接串；
-
-使用示例：
-
-```sh
-sharp-db-mcp
+```bash
+cd /Users/zhang/Developer/dotnet/sharp-db-mcp
+dotnet build src/SharpDbMcp/SharpDbMcp.csproj
 ```
 
-调用工具时传入：
+The binary is at `src/SharpDbMcp/bin/Debug/net10.0/sharp-db`.
 
-```json
-{
-  "dbType": "postgres",
-  "connectionString": "server=127.0.0.1;port=5432;database=test_db;user id=postgres;password=pgsql@18",
-  "sql": "select 1 as ok"
-}
+## Usage
+
+### Query — Execute SQL
+
+```bash
+sharp-db query --db-type postgres --connection "host=localhost;port=5432;database=mydb;username=postgres;password=pass" --sql "SELECT id, name FROM users"
 ```
+
+### Tables — List tables and views
+
+```bash
+sharp-db tables --db-type postgres --connection "host=localhost;port=5432;database=mydb;username=postgres;password=pass"
+```
+
+Optional `--schema` parameter to filter by schema:
+
+```bash
+sharp-db tables --db-type postgres --connection "..." --schema public
+```
+
+### Columns — Inspect table columns
+
+```bash
+sharp-db columns --db-type postgres --connection "..." --table users
+```
+
+Optional `--schema` parameter:
+
+```bash
+sharp-db columns --db-type postgres --connection "..." --table users --schema public
+```
+
+## As a Claude Code Skill
+
+This project includes a Skill at `.claude/skills/sharp-db/SKILL.md`. When working in Claude Code, you can use `/sharp-db` to invoke database queries directly.
+
+### Example usage in Claude Code
+
+```
+/sharp-db query --db-type sqlite --connection "Data Source=test.db" --sql "SELECT * FROM users"
+```
+
+## Supported databases
+
+| Database | Driver | Connection string example |
+|----------|--------|---------------------------|
+| PostgreSQL | Npgsql | `host=localhost;port=5432;database=mydb;username=postgres;password=pass` |
+| MySQL | MySql.Data | `server=localhost;port=3306;database=mydb;user=root;password=pass` |
+| SQLite | Microsoft.Data.Sqlite | `Data Source=/path/to/db.sqlite` |
+
+## Development
+
+### Build
+
+```bash
+dotnet build
+```
+
+### Test
+
+```bash
+dotnet test
+```
+
+### Project structure
+
+```
+src/SharpDbMcp/
+├── Metadata/
+│   ├── IMetadataProvider.cs         # Provider interface
+│   ├── BaseMetadataProvider.cs      # Shared execution logic
+│   ├── PostgresMetadataProvider.cs  # PostgreSQL SQL
+│   ├── MySQLMetadataProvider.cs     # MySQL SQL
+│   ├── SqliteMetadataProvider.cs    # SQLite SQL
+│   └── MetadataProviderFactory.cs   # Factory by dbType
+├── DatabaseOptions.cs               # Connection parameters
+├── DbConnectionFactory.cs           # Connection creation
+├── MarkdownTableFormatter.cs        # Result formatting
+├── MetadataQueryService.cs          # Metadata queries
+├── Program.cs                       # CLI entry point
+└── QueryExecutor.cs                 # SQL execution
+
+test/SharpDbMcpTest/
+└── QueryExecutorTests.cs            # Tests (SQLite in-memory)
+```
+
+## License
+
+MIT
