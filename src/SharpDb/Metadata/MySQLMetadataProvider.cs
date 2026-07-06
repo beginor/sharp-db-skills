@@ -9,10 +9,10 @@ internal sealed class MySQLMetadataProvider(
     protected override string GetTablesQuery() {
         // language=none
         return """
-            select tables.table_schema,
-                   tables.table_name,
-                   tables.table_type,
-                   tables.table_comment as table_description,
+            select tables.table_schema as table_schema,
+                   tables.table_name as table_name,
+                   tables.table_type as table_type,
+                   nullif(tables.table_comment, '') as table_description,
                    primary_keys.primary_key_columns,
                    foreign_keys.foreign_keys,
                    foreign_keys.related_objects
@@ -51,19 +51,19 @@ internal sealed class MySQLMetadataProvider(
 
     protected override string GetColumnsQuery() {
         return """
-            select columns.table_schema,
-                   columns.table_name,
-                   columns.column_name,
-                   columns.ordinal_position,
-                   columns.data_type,
-                   columns.is_nullable,
-                   columns.column_default,
-                   columns.column_comment as column_description,
+            select columns.table_schema as table_schema,
+                   columns.table_name as table_name,
+                   columns.column_name as column_name,
+                   columns.ordinal_position as ordinal_position,
+                   columns.data_type as data_type,
+                   columns.is_nullable as is_nullable,
+                   columns.column_default as column_default,
+                   nullif(columns.column_comment, '') as column_description,
                    case when columns.column_key = 'PRI' then 'YES' else 'NO' end as is_primary_key,
                    case when key_usage.referenced_table_name is null then 'NO' else 'YES' end as is_foreign_key,
-                   key_usage.referenced_table_schema,
-                   key_usage.referenced_table_name,
-                   key_usage.referenced_column_name
+                   key_usage.referenced_table_schema as referenced_table_schema,
+                   key_usage.referenced_table_name as referenced_table_name,
+                   key_usage.referenced_column_name as referenced_column_name
             from information_schema.columns columns
             left join information_schema.key_column_usage key_usage
               on key_usage.table_schema = columns.table_schema
