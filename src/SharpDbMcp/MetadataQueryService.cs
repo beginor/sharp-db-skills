@@ -113,7 +113,8 @@ public sealed class MetadataQueryService(
                 ) foreign_keys
                   on foreign_keys.table_schema = tables.table_schema
                  and foreign_keys.table_name = tables.table_name
-                where tables.table_schema = coalesce(nullif(@schema, ''), database())
+                where tables.table_schema not in ('information_schema', 'mysql', 'performance_schema', 'sys')
+                  and (@schema is null or @schema = '' or tables.table_schema = @schema)
                   and tables.table_type in ('BASE TABLE', 'VIEW')
                 order by tables.table_schema, tables.table_name
                 """,
@@ -161,7 +162,7 @@ public sealed class MetadataQueryService(
             options,
             query,
             new Dictionary<string, object?> {
-                ["schema"] = schema
+                ["schema"] = schema ?? string.Empty
             },
             cancellationToken
         );
@@ -266,7 +267,8 @@ public sealed class MetadataQueryService(
                  and key_usage.table_name = columns.table_name
                  and key_usage.column_name = columns.column_name
                  and key_usage.referenced_table_name is not null
-                where columns.table_schema = coalesce(nullif(@schema, ''), database())
+                where columns.table_schema not in ('information_schema', 'mysql', 'performance_schema', 'sys')
+                  and (@schema is null or @schema = '' or columns.table_schema = @schema)
                   and columns.table_name = @tableName
                 order by columns.table_schema, columns.table_name, columns.ordinal_position
                 """,
@@ -300,7 +302,7 @@ public sealed class MetadataQueryService(
             options,
             query,
             new Dictionary<string, object?> {
-                ["schema"] = schema,
+                ["schema"] = schema ?? string.Empty,
                 ["tableName"] = tableName
             },
             cancellationToken
