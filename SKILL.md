@@ -30,6 +30,8 @@ sharp-db query --db-type <postgres|mysql|sqlite> --connection "<conn-string>" --
 
 For non-SELECT statements (INSERT, UPDATE, DELETE), returns `Rows affected: N`.
 
+**Confirmation required for mutating statements.** Before running any SQL that modifies data (INSERT, UPDATE, DELETE, MERGE, REPLACE, TRUNCATE, CREATE, DROP, ALTER, etc.), you MUST present the SQL to the user and ask for explicit confirmation. Only proceed after the user agrees. SELECT and other read-only statements do not require confirmation.
+
 ### tables — List tables and views
 
 List all tables and views with metadata (primary keys, foreign keys, descriptions, related objects).
@@ -48,6 +50,16 @@ List columns for a specific table or view, including data types, constraints, nu
 sharp-db columns --db-type <postgres|mysql|sqlite> --connection "<conn-string>" --table <name> [--schema <name>]
 ```
 
+### execute — Execute a SQL file
+
+Execute a SQL file within a transaction. Requires interactive confirmation before running. Rolls back on error.
+
+```bash
+sharp-db execute --db-type <postgres|mysql|sqlite> --connection "<conn-string>" --file <path-to-sql-file>
+```
+
+The tool prompts `Execute? [y/N]` before running. Only `y` or `yes` proceeds; anything else aborts. stdin must be a terminal (redirected stdin is rejected for safety).
+
 ## Connection string patterns
 
 | Database | Example |
@@ -62,9 +74,10 @@ sharp-db columns --db-type <postgres|mysql|sqlite> --connection "<conn-string>" 
 
 1. **Identify the database type** — Ask the user or infer from context (PostgreSQL, MySQL, or SQLite).
 2. **Obtain the connection string** — Ask the user for connection details if not provided.
-3. **Choose the command** — `query` for SQL execution, `tables` for schema listing, `columns` for column inspection.
+3. **Choose the command** — `query` for SQL execution, `tables` for schema listing, `columns` for column inspection, `execute` for running SQL files.
 4. **Run and present** — Execute via Bash and present the markdown output to the user.
 5. **Chain for exploration** — For multi-step tasks (list tables → inspect columns → run query), chain commands naturally.
+6. **Confirm before execute** — When using `execute`, the tool will prompt for confirmation. Ensure the user understands the SQL file will run within a transaction.
 
 ## Examples
 

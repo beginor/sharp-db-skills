@@ -60,6 +60,16 @@ Optional `--schema` parameter:
 sharp-db columns --db-type postgres --connection "..." --table users --schema public
 ```
 
+### Execute — Run a SQL file
+
+Execute a SQL file within a transaction. Requires interactive confirmation before running. Rolls back on error.
+
+```bash
+sharp-db execute --db-type postgres --connection "..." --file migrate.sql
+```
+
+The tool prompts `Execute? [y/N]` before running. Only `y` or `yes` proceeds; anything else aborts. stdin must be a terminal (redirected stdin is rejected for safety).
+
 ## As a Claude Code Skill
 
 This project includes a Skill at `.claude/skills/sharp-db/SKILL.md`. When working in Claude Code, you can use `/sharp-db` to invoke database queries directly.

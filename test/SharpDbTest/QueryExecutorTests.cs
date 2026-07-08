@@ -157,6 +157,59 @@ public sealed class QueryExecutorTests {
     }
 
     [Test]
+    public async Task ExecuteFileAsync_CommitOnSuccess() {
+        await using var database = await InMemorySqliteDatabase.CreateAsync();
+        var executor = database.CreateExecutor();
+
+        var result = await executor.ExecuteFileAsync(
+            database.DbType,
+            database.ConnectionString,
+            "insert into people (id, name, note) values (3, 'Linus', 'git')"
+        );
+
+        Assert.That(result, Does.Contain("Rows affected: 1"));
+
+        var verify = await executor.ExecuteQueryAsync(
+            database.DbType,
+            database.ConnectionString,
+            "select id, name from people where id = 3"
+        );
+        Assert.That(verify, Does.Contain("Linus"));
+    }
+
+    [Test]
+    public async Task ExecuteFileAsync_RollbackOnError() {
+        await using var database = await InMemorySqliteDatabase.CreateAsync();
+        var executor = database.CreateExecutor();
+
+        var sql = """
+            insert into people (id, name, note) values (3, 'Linus', 'git');
+            insert into people (id, name, note) values (1, 'Duplicate', 'conflict');
+            """;
+
+        Assert.ThrowsAsync<Microsoft.Data.Sqlite.SqliteException>(
+            () => executor.ExecuteFileAsync(database.DbType, database.ConnectionString, sql)
+        );
+
+        var verify = await executor.ExecuteQueryAsync(
+            database.DbType,
+            database.ConnectionString,
+            "select id, name from people where id = 3"
+        );
+        Assert.That(verify, Does.Contain("No rows returned"));
+    }
+
+    [Test]
+    public async Task ExecuteFileAsync_RejectsEmptySql() {
+        await using var database = await InMemorySqliteDatabase.CreateAsync();
+        var executor = database.CreateExecutor();
+
+        Assert.ThrowsAsync<ArgumentException>(
+            () => executor.ExecuteFileAsync(database.DbType, database.ConnectionString, "  ")
+        );
+    }
+
+    [Test]
     public async Task Main_ReturnsHelpfulErrorForMissingOptionValue() {
         var (exitCode, error) = await RunProgramAsync("query", "--db-type", "--connection", "Data Source=:memory:", "--sql", "select 1");
 
