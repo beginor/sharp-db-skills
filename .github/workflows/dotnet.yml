@@ -43,7 +43,7 @@ jobs:
     - name: Generate version
       id: version
       run: echo "tag=$(date +%Y%m%d%H%M%S)" >> "$GITHUB_OUTPUT"
-    - name: Publish
+    - name: Publish and package
       run: |
         runtimes=(linux-x64 linux-arm64 osx-x64 osx-arm64 win-x64 win-arm64)
         for rid in "${runtimes[@]}"; do
@@ -57,6 +57,9 @@ jobs:
             --property:PublishReadyToRun=false \
             --property:DebugType=None \
             --output "./bin/$rid"
+          cd "./bin/$rid"
+          zip -r "../../sharp-db-${rid}.zip" .
+          cd ../..
         done
     - name: Create Release
       uses: softprops/action-gh-release@v2
@@ -65,11 +68,9 @@ jobs:
         name: Release ${{ steps.version.outputs.tag }}
         generate_release_notes: true
         files: |
-          ./bin/linux-x64/sharp-db
-          ./bin/linux-arm64/sharp-db
-          ./bin/osx-x64/sharp-db
-          ./bin/osx-arm64/sharp-db
-          ./bin/win-x64/sharp-db.exe
-          ./bin/win-arm64/sharp-db.exe
-        # Note: native libraries (e.g. libe_sqlite3.dylib) are embedded
-        # via IncludeNativeLibrariesForSelfExtract and extracted at runtime.
+          ./sharp-db-linux-x64.zip
+          ./sharp-db-linux-arm64.zip
+          ./sharp-db-osx-x64.zip
+          ./sharp-db-osx-arm64.zip
+          ./sharp-db-win-x64.zip
+          ./sharp-db-win-arm64.zip
