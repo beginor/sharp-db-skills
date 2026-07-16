@@ -10,7 +10,10 @@ A CLI tool for querying databases and inspecting schema metadata. Supports Postg
 
 ## Requirements
 
-You should have dotnet sdk 10.0.x installed.
+You should have dotnet sdk 10.0.x installed. if `dotnet` does not exist on system, please install it first:
+
+- macOS/Linux: `curl -fsSL https://dot.net/v1/dotnet-install.sh | bash`
+- Windows: `irm https://dot.net/v1/dotnet-install.ps1 | iex`
 
 ## Setup
 
